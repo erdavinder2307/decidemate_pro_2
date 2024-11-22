@@ -1,6 +1,8 @@
+import 'package:decidemate_pro/screens/home.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:decidemate_pro/services/firebase_service.dart';
+import 'package:uuid/uuid.dart';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -14,6 +16,7 @@ class _AddScreenState extends State<AddScreen> {
   final _chooseForController = TextEditingController();
   final List<Map<String, TextEditingController>> _choices = [];
   final FirebaseService _firebaseService = FirebaseService();
+  final String _id = Uuid().v4(); // Generate a unique identifier
 
   @override
   void dispose() {
@@ -32,11 +35,42 @@ class _AddScreenState extends State<AddScreen> {
     });
   }
 
-  void _saveChoices() async {
+  void _deleteChoice(int index) {
+    setState(() {
+      _choices[index]['choice']?.dispose();
+      _choices.removeAt(index);
+    });
+  }
+
+  Future<void> _saveChoices() async {
     if (_formKey.currentState?.validate() ?? false) {
       final chooseFor = _chooseForController.text;
+      final existingItems = await _firebaseService.getDecisions();
+      if (existingItems.any((item) => item['chooseFor'] == chooseFor)) {
+        showCupertinoDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return CupertinoAlertDialog(
+              title: Text('Duplicate Entry'),
+              content: Text('An entry with this "Choose For" already exists.'),
+              actions: <CupertinoDialogAction>[
+                CupertinoDialogAction(
+                  isDefaultAction: true,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+        return;
+      }
       final choices = _choices.map((choice) => choice['choice']?.text).where((text) => text != null).cast<String>().toList();
-      await _firebaseService.insertChoices(chooseFor, choices);
+      await _firebaseService.insertDecision(_id, chooseFor); // Insert decision first
+      await _firebaseService.insertChoices(_id, choices); // Pass the unique identifier along with choices
+      Navigator.push(context, CupertinoPageRoute(builder: (context) => const HomeScreen()));
     }
   }
 
@@ -59,9 +93,15 @@ class _AddScreenState extends State<AddScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: <Widget>[
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Choose For:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  ),
                   CupertinoTextFormFieldRow(
                     controller: _chooseForController,
                     placeholder: 'Choose for:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: CupertinoColors.activeBlue),
+                    textCapitalization: TextCapitalization.sentences,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a value';
@@ -69,7 +109,12 @@ class _AddScreenState extends State<AddScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 20),
+               
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Choices:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  ),
+                     const SizedBox(height: 20),
                   ListView.builder(
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
@@ -77,29 +122,47 @@ class _AddScreenState extends State<AddScreen> {
                     itemBuilder: (context, index) {
                       return Column(
                         children: [
-                          CupertinoTextFormFieldRow(
-                            controller: _choices[index]['choice'],
-                            placeholder: 'Enter choice',
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a choice';
-                              }
-                              return null;
-                            },
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CupertinoTextFormFieldRow(
+                                  controller: _choices[index]['choice'],
+                                  placeholder: 'Enter choice',
+                                  style: TextStyle(fontSize: 16, color: CupertinoColors.black),
+                                  textCapitalization: TextCapitalization.sentences,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter a choice';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                onPressed: () => _deleteChoice(index),
+                                child: Icon(CupertinoIcons.delete, color: CupertinoColors.destructiveRed),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 20),
                         ],
                       );
                     },
                   ),
-                  CupertinoButton.filled(
-                    child: const Text('Add Choice'),
-                    onPressed: _addChoice,
-                  ),
                   const SizedBox(height: 20),
-                  CupertinoButton.filled(
-                    child: const Text('Save All'),
-                    onPressed: _saveChoices,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CupertinoButton(
+                        onPressed: _addChoice,
+                        child: const Icon(CupertinoIcons.add_circled, size: 28, color: CupertinoColors.activeBlue),
+                      ),
+                      CupertinoButton(
+                        onPressed: _saveChoices,
+                        child: const Icon(CupertinoIcons.check_mark_circled, size: 28, color: CupertinoColors.activeGreen),
+                      ),
+                    ],
                   ),
                 ],
               ),
