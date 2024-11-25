@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: const Icon(CupertinoIcons.sidebar_left),
+        leading: Image.asset('assets/icon/icon.png', width: 30),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -93,8 +93,35 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(CupertinoIcons.trash),
               onPressed: () async {
-                await _firebaseService.clearDatabase();
-                await _loadDecisions();
+                final bool? confirm = await showCupertinoDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return CupertinoAlertDialog(
+                      title: const Text('Clear Database'),
+                      content: const Text('Are you sure you want to clear the entire database?'),
+                      actions: <CupertinoDialogAction>[
+                        CupertinoDialogAction(
+                          isDefaultAction: true,
+                          onPressed: () {
+                            Navigator.of(context).pop(false);
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        CupertinoDialogAction(
+                          isDestructiveAction: true,
+                          onPressed: () {
+                            Navigator.of(context).pop(true);
+                          },
+                          child: const Text('Clear'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+                if (confirm == true) {
+                  await _firebaseService.clearDatabase();
+                  await _loadDecisions();
+                }
               },
             ),
           ],

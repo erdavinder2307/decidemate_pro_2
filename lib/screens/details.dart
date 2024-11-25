@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:decidemate_pro/services/firebase_service.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:uuid/uuid.dart';
 
 class DetailsScreen extends StatefulWidget {
   const DetailsScreen({super.key});
@@ -20,6 +21,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
   final BehaviorSubject<int> _controller = BehaviorSubject<int>();
   bool _isSpinning = false;
   int selectedChoice = 0;
+  List choices = [];
+  List results = [];
 
   @override
   void didChangeDependencies() {
@@ -34,16 +37,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   Future<void> _loadChoices() async {
-    final choices =
-        await _firebaseService.getChoicesFor(_id); // Use the unique identifier
+     choices = await _firebaseService.getChoicesFor(_id); // Use the unique identifier
+     results = await _firebaseService.getResultsFor(_id); // Fetch results for the decision
     setState(() {
       _choices = choices.map((choice) => choice['choice'] as String).toList();
       _choiceCounts = {
         for (var choice in choices)
-          choice['choice'] as String: (choice['count'] as int?) ?? 0
+          choice['choice'] as String: results.where((result) => result['choiceId'] == choice['id']).length
       };
-      _choices.sort((a, b) => (_choiceCounts[b] ?? 0)
-          .compareTo(_choiceCounts[a] ?? 0)); // Sort choices by count
+      _choices.sort((a, b) => (_choiceCounts[b] ?? 0).compareTo(_choiceCounts[a] ?? 0)); // Sort choices by count
     });
   }
 
@@ -116,7 +118,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             _controller.stream.first.then((selectedIndex) {
                               final selectedChoice = _choices[selectedIndex];
                               _incrementChoiceCount(selectedChoice);
-                              _firebaseService.insertResult(_id, _chooseFor, selectedChoice);
+                             var choiceId = choices.firstWhere((choice) => choice['choice'] == selectedChoice)['id'];
+                              _firebaseService.insertResult(Uuid().v4(), _id,choiceId );
                             });
                           });
                         },

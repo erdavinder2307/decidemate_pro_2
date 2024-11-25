@@ -40,6 +40,8 @@ dependencies:
   rxdart: ^0.27.2
   font_awesome_flutter: ^10.8.0
   uuid: ^4.5.1
+  flutter_launcher_icons: ^0.14.1
+  rename_app: ^1.6.1
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +58,23 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    background_color: "#hexcode"
+    theme_color: "#hexcode"
+  windows:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    icon_size: 48 # min:48, max:256, default: 48
+  macos:
+    generate: true
+    image_path: "assets/icon/icon.png"
 flutter:
 
   # The following line ensures that the Material Icons font is
@@ -64,7 +83,11 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/
+    - assets/icon/
+    - assets/images/
+    - assets/fonts/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
