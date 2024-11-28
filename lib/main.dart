@@ -24,16 +24,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoApp(
-      title: 'Flutter Demo',
-      theme: const CupertinoThemeData(
-        primaryColor: Color(0xFF000000),
+      debugShowCheckedModeBanner: false,
+      title: 'DecideMate Pro',
+      theme: CupertinoThemeData(
+        brightness: WidgetsBinding.instance.window.platformBrightness,
+        primaryColor: const Color(0xFF000000),
       ),
+    
       initialRoute: Routes.home,
       routes: {
         Routes.home: (context) => const HomeScreen(),
         Routes.details: (context) => const DetailsScreen(),
-        Routes.edit:(context) => const EditScreen(),
-        Routes.add:(context) => const AddScreen(),
+        Routes.edit: (context) => const EditScreen(),
+        Routes.add: (context) => const AddScreen(),
       },
     );
   }

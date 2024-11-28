@@ -98,7 +98,14 @@ class _EditScreenState extends State<EditScreen> {
       navigationBar: CupertinoNavigationBar(
         automaticallyImplyLeading: true,
         automaticallyImplyMiddle: true,
-        middle: Text('Edit'),
+        middle: Text('Edit', style: TextStyle(color: CupertinoDynamicColor.resolve(CupertinoColors.label, context))),
+        leading: CupertinoNavigationBarBackButton(
+          color: CupertinoDynamicColor.resolve(CupertinoColors.activeBlue, context),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+            
       ),
       child: SafeArea(
         child: Form(
@@ -115,7 +122,11 @@ class _EditScreenState extends State<EditScreen> {
                   CupertinoTextFormFieldRow(
                     controller: _chooseForController,
                     placeholder: 'Choose for:',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: CupertinoColors.activeBlue),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: CupertinoDynamicColor.resolve(CupertinoColors.activeBlue, context)
+                    ),
                     textCapitalization: TextCapitalization.sentences,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -146,7 +157,10 @@ class _EditScreenState extends State<EditScreen> {
                                 child: CupertinoTextFormFieldRow(
                                   controller: _choices[index]['choice'],
                                   placeholder: 'Enter choice',
-                                  style: TextStyle(fontSize: 16, color: CupertinoColors.black),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: CupertinoDynamicColor.resolve(CupertinoColors.label, context)
+                                  ),
                                   textCapitalization: TextCapitalization.sentences,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -159,7 +173,10 @@ class _EditScreenState extends State<EditScreen> {
                               CupertinoButton(
                                 padding: EdgeInsets.zero,
                                 onPressed: () => _deleteChoice(index),
-                                child: Icon(CupertinoIcons.delete, color: CupertinoColors.destructiveRed),
+                                child: Icon(
+                                  CupertinoIcons.delete,
+                                  color: CupertinoDynamicColor.resolve(CupertinoColors.destructiveRed, context)
+                                ),
                               ),
                             ],
                           ),
@@ -174,11 +191,19 @@ class _EditScreenState extends State<EditScreen> {
                     children: [
                       CupertinoButton(
                         onPressed: _addChoice,
-                        child: const Icon(CupertinoIcons.add_circled, size: 28, color: CupertinoColors.activeBlue),
+                        child: const Icon(
+                          CupertinoIcons.add_circled,
+                          size: 28,
+                          color: CupertinoColors.activeBlue
+                        ),
                       ),
                       CupertinoButton(
                         onPressed: _updateChoices,
-                        child: const Icon(CupertinoIcons.check_mark_circled, size: 28, color: CupertinoColors.activeGreen),
+                        child: const Icon(
+                          CupertinoIcons.check_mark_circled,
+                          size: 28,
+                          color: CupertinoColors.activeGreen
+                        ),
                       ),
                     ],
                   ),

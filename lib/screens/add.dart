@@ -79,6 +79,7 @@ class _AddScreenState extends State<AddScreen> {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoNavigationBarBackButton(
+          color: CupertinoDynamicColor.resolve(CupertinoColors.activeBlue, context),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -100,7 +101,11 @@ class _AddScreenState extends State<AddScreen> {
                   CupertinoTextFormFieldRow(
                     controller: _chooseForController,
                     placeholder: 'Choose for:',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: CupertinoColors.activeBlue),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: CupertinoDynamicColor.resolve(CupertinoColors.activeBlue, context),
+                    ),
                     textCapitalization: TextCapitalization.sentences,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -109,12 +114,11 @@ class _AddScreenState extends State<AddScreen> {
                       return null;
                     },
                   ),
-               
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text('Choices:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   ),
-                     const SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   ListView.builder(
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
@@ -128,7 +132,10 @@ class _AddScreenState extends State<AddScreen> {
                                 child: CupertinoTextFormFieldRow(
                                   controller: _choices[index]['choice'],
                                   placeholder: 'Enter choice',
-                                  style: TextStyle(fontSize: 16, color: CupertinoColors.black),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: CupertinoDynamicColor.resolve(CupertinoColors.label, context),
+                                  ),
                                   textCapitalization: TextCapitalization.sentences,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -141,7 +148,7 @@ class _AddScreenState extends State<AddScreen> {
                               CupertinoButton(
                                 padding: EdgeInsets.zero,
                                 onPressed: () => _deleteChoice(index),
-                                child: Icon(CupertinoIcons.delete, color: CupertinoColors.destructiveRed),
+                                child: Icon(CupertinoIcons.delete, color: CupertinoDynamicColor.resolve(CupertinoColors.destructiveRed, context)),
                               ),
                             ],
                           ),
@@ -155,14 +162,15 @@ class _AddScreenState extends State<AddScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       CupertinoButton(
-                        onPressed: _addChoice,
-                        child: const Icon(CupertinoIcons.add_circled, size: 28, color: CupertinoColors.activeBlue),
+                      onPressed: _addChoice,
+                      child: Icon(CupertinoIcons.add_circled, size: 28, color: CupertinoDynamicColor.resolve(CupertinoColors.activeBlue, context)),
                       ),
                       CupertinoButton(
-                        onPressed: _saveChoices,
-                        child: const Icon(CupertinoIcons.check_mark_circled, size: 28, color: CupertinoColors.activeGreen),
+                      onPressed: _saveChoices,
+                      child: Icon(CupertinoIcons.check_mark_circled, size: 28, color: CupertinoDynamicColor.resolve(CupertinoColors.activeGreen, context)),
                       ),
                     ],
+                    
                   ),
                 ],
               ),

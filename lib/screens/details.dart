@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:decidemate_pro/services/firebase_service.dart';
@@ -62,6 +64,37 @@ class _DetailsScreenState extends State<DetailsScreen> {
     _loadChoices();
   }
 
+  Future<void> _confirmClearResults() async {
+    final shouldClear = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) {
+        return CupertinoAlertDialog(
+          title: Text('Clear Results', style: TextStyle(color: CupertinoDynamicColor.resolve(CupertinoColors.label, context))),
+          content: Text('Are you sure you want to clear all results?', style: TextStyle(color: CupertinoDynamicColor.resolve(CupertinoColors.secondaryLabel, context))),
+          actions: [
+            CupertinoDialogAction(
+              child: Text('Cancel', style: TextStyle(color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context))),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            CupertinoDialogAction(
+              child: Text('Clear', style: TextStyle(color: CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context))),
+              isDestructiveAction: true,
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldClear == true) {
+      await _clearResults();
+    }
+  }
+
   @override
   void dispose() {
     _controller.close();
@@ -75,6 +108,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
         automaticallyImplyLeading: true,
         automaticallyImplyMiddle: true,
         middle: Text('Details'),
+        leading: CupertinoNavigationBarBackButton(
+          color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       child: SafeArea(
         left: true,
@@ -91,6 +130,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   ? Padding(
                       padding: const EdgeInsets.symmetric(vertical: 20.0),
                       child: FortuneWheel(
+                        animateFirst: false,
+                        alignment: Alignment(
+                          (2 * (0.5 - Random().nextDouble())).toDouble(),
+                          (2 * (0.5 - Random().nextDouble())).toDouble(),
+                        ),
+                        styleStrategy: UniformStyleStrategy(),
                         physics: CircularPanPhysics(
                           duration: Duration(seconds: 1),
                           curve: Curves.decelerate,
@@ -101,7 +146,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             FortuneItem(
                               child: Text(choice,
                                   style: TextStyle(
-                                      color: Colors.white, fontSize: 18)),
+                                      color: CupertinoDynamicColor.resolve(CupertinoColors.label, context),
+                                      fontSize: choice.length > 10 ? 14 : 18)),
                               style: FortuneItemStyle(
                                 color: Colors.primaries[
                                     _choices.indexOf(choice) %
@@ -116,10 +162,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             _isSpinning = false;
 
                             _controller.stream.first.then((selectedIndex) {
-                              final selectedChoice = _choices[selectedIndex];
-                              _incrementChoiceCount(selectedChoice);
-                             var choiceId = choices.firstWhere((choice) => choice['choice'] == selectedChoice)['id'];
-                              _firebaseService.insertResult(Uuid().v4(), _id,choiceId );
+                              if (_choices.isNotEmpty) {
+                                final selectedChoice = _choices[selectedIndex];
+                                _incrementChoiceCount(selectedChoice);
+                                var choiceId = choices.firstWhere((choice) => choice['choice'] == selectedChoice)['id'];
+                                _firebaseService.insertResult(Uuid().v4(), _id, choiceId);
+                              }
                             });
                           });
                         },
@@ -138,12 +186,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     )
                   : Center(
                       child: Text('Add more choices to spin the wheel',
-                          style: TextStyle(fontSize: 18, color: Colors.grey)),
+                          style: TextStyle(fontSize: 18, color: CupertinoDynamicColor.resolve(CupertinoColors.secondaryLabel, context))),
                     ),
             ),
             const SizedBox(height: 20),
             CupertinoButton(
-              color: CupertinoColors.activeBlue,
+              color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
               onPressed: _isSpinning
                   ? null
                   : () {
@@ -171,7 +219,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     child: CupertinoListTile(
                       title: Text('$choice', style: TextStyle(fontSize: 18)),
                       trailing: Text('$count',
-                          style: TextStyle(fontSize: 18, color: Colors.grey)),
+                          style: TextStyle(fontSize: 18, color: CupertinoDynamicColor.resolve(CupertinoColors.label, context))),
                     ),
                   );
                 },
@@ -179,8 +227,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 20),
             CupertinoButton(
-              color: CupertinoColors.destructiveRed,
-              onPressed: _clearResults,
+              color: CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context),
+              onPressed: _confirmClearResults,
               child: Text('Clear Results', style: TextStyle(fontSize: 18)),
             ),
             const SizedBox(height: 20),
