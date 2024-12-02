@@ -56,6 +56,33 @@ class _EditScreenState extends State<EditScreen> {
 
   Future<void> _updateChoices() async {
     if (_formKey.currentState?.validate() ?? false) {
+      if (_choices.length < 2) {
+        if (Theme.of(context).platform == TargetPlatform.iOS) {
+          showCupertinoDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return CupertinoAlertDialog(
+                title: Text('Validation Error'),
+                content: Text('Please add at least two choices'),
+                actions: <CupertinoDialogAction>[
+                  CupertinoDialogAction(
+                    isDefaultAction: true,
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('OK', style: TextStyle(color: CupertinoColors.activeBlue)),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please add at least two choices')),
+          );
+        }
+        return;
+      }
       final chooseFor = _chooseForController.text;
       final choices = _choices.map((choice) => choice['choice']?.text).where((text) => text != null).cast<String>().toList();
       await _firebaseService.updateDecision(_id, chooseFor); // Update the chooseFor field

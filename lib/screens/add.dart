@@ -44,6 +44,33 @@ class _AddScreenState extends State<AddScreen> {
 
   Future<void> _saveChoices() async {
     if (_formKey.currentState?.validate() ?? false) {
+      if (_choices.length < 2) {
+        if (Theme.of(context).platform == TargetPlatform.iOS) {
+          showCupertinoDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return CupertinoAlertDialog(
+                title: Text('Validation Error'),
+                content: Text('Please add at least two choices'),
+                actions: <CupertinoDialogAction>[
+                  CupertinoDialogAction(
+                    isDefaultAction: true,
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('OK', style: TextStyle(color: CupertinoColors.activeBlue)),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please add at least two choices')),
+          );
+        }
+        return;
+      }
       final chooseFor = _chooseForController.text;
       final existingItems = await _firebaseService.getDecisions();
       if (existingItems.any((item) => item['chooseFor'] == chooseFor)) {

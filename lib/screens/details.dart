@@ -136,7 +136,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
       appBar: AppBar(
         title: Text('Details'),
         leading: BackButton(
-          color: Theme.of(context).primaryColor,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
           onPressed: () {
             Navigator.pop(context);
           },
