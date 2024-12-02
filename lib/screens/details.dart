@@ -103,6 +103,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Theme.of(context).platform == TargetPlatform.iOS
+        ? _buildCupertinoPage(context)
+        : _buildMaterialPage(context);
+  }
+
+  Widget _buildCupertinoPage(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         automaticallyImplyLeading: true,
@@ -120,121 +126,146 @@ class _DetailsScreenState extends State<DetailsScreen> {
         top: true,
         right: true,
         bottom: true,
-        child: Column(
-          children: [
-            Text('Choose For: $_chooseFor',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            Expanded(
-              child: _choices.length > 1
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20.0),
-                      child: FortuneWheel(
-                        animateFirst: false,
-                        alignment: Alignment(
-                          (2 * (0.5 - Random().nextDouble())).toDouble(),
-                          (2 * (0.5 - Random().nextDouble())).toDouble(),
-                        ),
-                        styleStrategy: UniformStyleStrategy(),
-                        physics: CircularPanPhysics(
-                          duration: Duration(seconds: 1),
-                          curve: Curves.decelerate,
-                        ),
-                        selected: _controller.stream,
-                        items: [
-                          for (var choice in _choices)
-                            FortuneItem(
-                              child: Text(choice,
-                                  style: TextStyle(
-                                      color: CupertinoDynamicColor.resolve(CupertinoColors.label, context),
-                                      fontSize: choice.length > 10 ? 14 : 18)),
-                              style: FortuneItemStyle(
-                                color: Colors.primaries[
-                                    _choices.indexOf(choice) %
-                                        Colors.primaries.length],
-                                borderColor: Colors.white,
-                                borderWidth: 2,
-                              ),
-                            ),
-                        ],
-                        onAnimationEnd: () {
-                          setState(() {
-                            _isSpinning = false;
+        child: _buildContent(context),
+      ),
+    );
+  }
 
-                            _controller.stream.first.then((selectedIndex) {
-                              if (_choices.isNotEmpty) {
-                                final selectedChoice = _choices[selectedIndex];
-                                _incrementChoiceCount(selectedChoice);
-                                var choiceId = choices.firstWhere((choice) => choice['choice'] == selectedChoice)['id'];
-                                _firebaseService.insertResult(Uuid().v4(), _id, choiceId);
-                              }
-                            });
-                          });
-                        },
-                        indicators: <FortuneIndicator>[
-                          FortuneIndicator(
-                            alignment: Alignment.topCenter,
-                            child: TriangleIndicator(
-                              color: const Color.fromARGB(255, 252, 211, 211),
-                              elevation: 10,
-                              width: 20,
-                              height: 15,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : Center(
-                      child: Text('Add more choices to spin the wheel',
-                          style: TextStyle(fontSize: 18, color: CupertinoDynamicColor.resolve(CupertinoColors.secondaryLabel, context))),
-                    ),
-            ),
-            const SizedBox(height: 20),
-            CupertinoButton(
-              color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
-              onPressed: _isSpinning
-                  ? null
-                  : () {
-                      setState(() {
-                        _isSpinning = true;
-                      });
-                      selectedChoice = Fortune.randomInt(0, _choices.length);
-                      _controller.add(selectedChoice);
-                    },
-              child: Text('Spin', style: TextStyle(fontSize: 18)),
-            ),
-            const SizedBox(height: 20),
-            Text('Results:',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _choices.length,
-                itemBuilder: (context, index) {
-                  final choice = _choices[index];
-                  final count = _choiceCounts[choice] ?? 0;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 16.0),
-                    child: CupertinoListTile(
-                      title: Text('$choice', style: TextStyle(fontSize: 18)),
-                      trailing: Text('$count',
-                          style: TextStyle(fontSize: 18, color: CupertinoDynamicColor.resolve(CupertinoColors.label, context))),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-            CupertinoButton(
-              color: CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context),
-              onPressed: _confirmClearResults,
-              child: Text('Clear Results', style: TextStyle(fontSize: 18)),
-            ),
-            const SizedBox(height: 20),
-          ],
+  Widget _buildMaterialPage(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Details'),
+        leading: BackButton(
+          color: Theme.of(context).primaryColor,
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
+      body: SafeArea(
+        left: true,
+        top: true,
+        right: true,
+        bottom: true,
+        child: _buildContent(context),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return Column(
+      children: [
+        Text('Choose For: $_chooseFor',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+        Expanded(
+          child: _choices.length > 1
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  child: FortuneWheel(
+                    animateFirst: false,
+                    alignment: Alignment(
+                      (2 * (0.5 - Random().nextDouble())).toDouble(),
+                      (2 * (0.5 - Random().nextDouble())).toDouble(),
+                    ),
+                    styleStrategy: UniformStyleStrategy(),
+                    physics: CircularPanPhysics(
+                      duration: Duration(seconds: 1),
+                      curve: Curves.decelerate,
+                    ),
+                    selected: _controller.stream,
+                    items: [
+                      for (var choice in _choices)
+                        FortuneItem(
+                          child: Text(choice,
+                              style: TextStyle(
+                                  color: CupertinoDynamicColor.resolve(CupertinoColors.label, context),
+                                  fontSize: choice.length > 10 ? 14 : 18)),
+                          style: FortuneItemStyle(
+                            color: Colors.primaries[
+                                _choices.indexOf(choice) %
+                                    Colors.primaries.length],
+                            borderColor: Colors.white,
+                            borderWidth: 2,
+                          ),
+                        ),
+                    ],
+                    onAnimationEnd: () {
+                      setState(() {
+                        _isSpinning = false;
+
+                        _controller.stream.first.then((selectedIndex) {
+                          if (_choices.isNotEmpty) {
+                            final selectedChoice = _choices[selectedIndex];
+                            _incrementChoiceCount(selectedChoice);
+                            var choiceId = choices.firstWhere((choice) => choice['choice'] == selectedChoice)['id'];
+                            _firebaseService.insertResult(Uuid().v4(), _id, choiceId);
+                          }
+                        });
+                      });
+                    },
+                    indicators: <FortuneIndicator>[
+                      FortuneIndicator(
+                        alignment: Alignment.topCenter,
+                        child: TriangleIndicator(
+                          color: const Color.fromARGB(255, 252, 211, 211),
+                          elevation: 10,
+                          width: 20,
+                          height: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Center(
+                  child: Text('Add more choices to spin the wheel',
+                      style: TextStyle(fontSize: 18, color: CupertinoDynamicColor.resolve(CupertinoColors.secondaryLabel, context))),
+                ),
+        ),
+        const SizedBox(height: 20),
+        CupertinoButton(
+          color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
+          onPressed: _isSpinning
+              ? null
+              : () {
+                  setState(() {
+                    _isSpinning = true;
+                  });
+                  selectedChoice = Fortune.randomInt(0, _choices.length);
+                  _controller.add(selectedChoice);
+                },
+          child: Text('Spin', style: TextStyle(fontSize: 18)),
+        ),
+        const SizedBox(height: 20),
+        Text('Results:',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _choices.length,
+            itemBuilder: (context, index) {
+              final choice = _choices[index];
+              final count = _choiceCounts[choice] ?? 0;
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 8.0, horizontal: 16.0),
+                child: ListTile(
+                  title: Text('$choice', style: TextStyle(fontSize: 18)),
+                  trailing: Text('$count',
+                      style: TextStyle(fontSize: 18, color: CupertinoDynamicColor.resolve(CupertinoColors.label, context))),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 20),
+        CupertinoButton(
+          color: CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context),
+          onPressed: _confirmClearResults,
+          child: Text('Clear Results', style: TextStyle(fontSize: 18)),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }

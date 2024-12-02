@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:decidemate_pro/services/firebase_service.dart';
 import 'package:decidemate_pro/screens/home.dart';
 
@@ -94,6 +95,12 @@ class _EditScreenState extends State<EditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Theme.of(context).platform == TargetPlatform.iOS
+        ? _buildCupertinoPage(context)
+        : _buildMaterialPage(context);
+  }
+
+  Widget _buildCupertinoPage(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         automaticallyImplyLeading: true,
@@ -105,7 +112,6 @@ class _EditScreenState extends State<EditScreen> {
             Navigator.pop(context);
           },
         ),
-            
       ),
       child: SafeArea(
         child: Form(
@@ -134,10 +140,6 @@ class _EditScreenState extends State<EditScreen> {
                       }
                       return null;
                     },
-                    // Remove the onChanged listener to prevent clearing choices
-                    // onChanged: (value) {
-                    //   _loadChoices();
-                    // },
                   ),
                   const SizedBox(height: 20),
                   const Align(
@@ -210,6 +212,116 @@ class _EditScreenState extends State<EditScreen> {
                   const SizedBox(height: 20),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMaterialPage(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Edit'),
+      ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: <Widget>[
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Choose For:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                ),
+                TextFormField(
+                  controller: _chooseForController,
+                  decoration: const InputDecoration(
+                    hintText: 'Choose for:',
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                  textCapitalization: TextCapitalization.sentences,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a value';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Choices:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                ),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _choices.length,
+                  itemBuilder: (context, index) {
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _choices[index]['choice'],
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter choice',
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                ),
+                                textCapitalization: TextCapitalization.sentences,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter a choice';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _deleteChoice(index),
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: _addChoice,
+                      icon: const Icon(
+                        Icons.add_circle,
+                        size: 28,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _updateChoices,
+                      icon: const Icon(
+                        Icons.check_circle,
+                        size: 28,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
         ),

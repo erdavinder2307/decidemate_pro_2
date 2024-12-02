@@ -76,6 +76,12 @@ class _AddScreenState extends State<AddScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Theme.of(context).platform == TargetPlatform.iOS
+        ? _buildCupertinoPage(context)
+        : _buildMaterialPage(context);
+  }
+
+  Widget _buildCupertinoPage(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoNavigationBarBackButton(
@@ -162,15 +168,122 @@ class _AddScreenState extends State<AddScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       CupertinoButton(
-                      onPressed: _addChoice,
-                      child: Icon(CupertinoIcons.add_circled, size: 28, color: CupertinoDynamicColor.resolve(CupertinoColors.activeBlue, context)),
+                        onPressed: _addChoice,
+                        child: Icon(CupertinoIcons.add_circled, size: 28, color: CupertinoDynamicColor.resolve(CupertinoColors.activeBlue, context)),
                       ),
                       CupertinoButton(
-                      onPressed: _saveChoices,
-                      child: Icon(CupertinoIcons.check_mark_circled, size: 28, color: CupertinoDynamicColor.resolve(CupertinoColors.activeGreen, context)),
+                        onPressed: _saveChoices,
+                        child: Icon(CupertinoIcons.check_mark_circled, size: 28, color: CupertinoDynamicColor.resolve(CupertinoColors.activeGreen, context)),
                       ),
                     ],
-                    
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMaterialPage(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add Item'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: Scrollbar(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: <Widget>[
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Choose For:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  ),
+                  TextFormField(
+                    controller: _chooseForController,
+                    decoration: InputDecoration(
+                      hintText: 'Choose for:',
+                      hintStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    textCapitalization: TextCapitalization.sentences,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a value';
+                      }
+                      return null;
+                    },
+                  ),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Choices:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  ),
+                  const SizedBox(height: 20),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: _choices.length,
+                    itemBuilder: (context, index) {
+                      return Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _choices[index]['choice'],
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter choice',
+                                    hintStyle: TextStyle(
+                                      fontSize: 16,
+                                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                                    ),
+                                  ),
+                                  textCapitalization: TextCapitalization.sentences,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter a choice';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                                onPressed: () => _deleteChoice(index),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.add_circle, size: 28, color: Theme.of(context).colorScheme.primary),
+                        onPressed: _addChoice,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.check_circle, size: 28, color: Theme.of(context).colorScheme.secondary),
+                        onPressed: _saveChoices,
+                      ),
+                    ],
                   ),
                 ],
               ),
