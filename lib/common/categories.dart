@@ -1,0 +1,20 @@
+enum Category {
+  All,
+  Health,
+  Finance,
+  Education,
+  Career,
+  Relationships,
+  Travel,
+  Shopping,
+  Fitness,
+  Entertainment,
+  Food,
+  PersonalDevelopment,
+  Home,
+  Technology,
+  Hobbies,
+  Social,
+  Spiritual,
+  Others
+}

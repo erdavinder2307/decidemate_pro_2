@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:decidemate_pro/services/firebase_service.dart';
 import 'package:decidemate_pro/screens/home.dart';
+import 'package:decidemate_pro/common/categories.dart';
 
 class EditScreen extends StatefulWidget {
   const EditScreen({super.key});
@@ -16,6 +17,7 @@ class _EditScreenState extends State<EditScreen> {
   final List<Map<String, TextEditingController>> _choices = [];
   final FirebaseService _firebaseService = FirebaseService();
   late String _id; // Declare a variable to hold the unique identifier
+  Category? _selectedCategory; // Change to Category enum
 
   @override
   void initState() {
@@ -30,9 +32,16 @@ class _EditScreenState extends State<EditScreen> {
     if (arguments != null) {
       _id = arguments['id'] ?? ''; // Ensure _id is not null
       final chooseFor = arguments['chooseFor'] ?? ''; // Ensure chooseFor is not null
+      _selectedCategory = Category.values.firstWhere((category) => category.toString().split('.').last == arguments['category'], orElse: () => Category.Others); // Convert category string to enum
       if (_chooseForController.text != chooseFor) {
         _chooseForController.text = chooseFor;
         _loadChoices();
+      }
+    }
+    // Ensure at least two choices are visible by default
+    if (_choices.length < 2) {
+      for (int i = _choices.length; i < 2; i++) {
+        _addChoice();
       }
     }
   }
@@ -57,37 +66,41 @@ class _EditScreenState extends State<EditScreen> {
   Future<void> _updateChoices() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (_choices.length < 2) {
-        if (Theme.of(context).platform == TargetPlatform.iOS) {
-          showCupertinoDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return CupertinoAlertDialog(
-                title: Text('Validation Error'),
-                content: Text('Please add at least two choices'),
-                actions: <CupertinoDialogAction>[
-                  CupertinoDialogAction(
-                    isDefaultAction: true,
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('OK', style: TextStyle(color: CupertinoColors.activeBlue)),
-                  ),
-                ],
-              );
-            },
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please add at least two choices')),
-          );
-        }
+        _showValidationError('Please add at least two choices');
         return;
       }
       final chooseFor = _chooseForController.text;
       final choices = _choices.map((choice) => choice['choice']?.text).where((text) => text != null).cast<String>().toList();
-      await _firebaseService.updateDecision(_id, chooseFor); // Update the chooseFor field
+      await _firebaseService.updateDecision(_id, chooseFor, category: _selectedCategory?.toString().split('.').last); // Use enum name
       await _firebaseService.updateChoices(_id, choices); // Use the unique identifier along with choices
       Navigator.push(context, CupertinoPageRoute(builder: (context) => const HomeScreen()));
+    }
+  }
+
+  void _showValidationError(String message) {
+    if (Theme.of(context).platform == TargetPlatform.iOS) {
+      showCupertinoDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CupertinoAlertDialog(
+            title: Text('Validation Error'),
+            content: Text(message),
+            actions: <CupertinoDialogAction>[
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK', style: TextStyle(color: CupertinoColors.activeBlue)),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
   }
 
@@ -108,6 +121,42 @@ class _EditScreenState extends State<EditScreen> {
         'choice': controller,
       });
     });
+  }
+
+  void _showCategoryPicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 260,
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 200,
+                child: CupertinoPicker(
+                  itemExtent: 32.0,
+                  onSelectedItemChanged: (int index) {
+                    setState(() {
+                      _selectedCategory = Category.values[index];
+                    });
+                  },
+                  children: Category.values.map((Category category) {
+                    return Text(category.toString().split('.').last);
+                  }).toList(),
+                ),
+              ),
+              CupertinoButton(
+                child: const Text('Done', style: TextStyle(color: CupertinoColors.activeBlue)),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -147,11 +196,9 @@ class _EditScreenState extends State<EditScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, // Align fields with labels
                 children: <Widget>[
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Choose For:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  ),
+                  const Text('Choose For:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   CupertinoTextFormFieldRow(
                     controller: _chooseForController,
                     placeholder: 'Choose for:',
@@ -169,10 +216,16 @@ class _EditScreenState extends State<EditScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Choices:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const Text('Category:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  CupertinoButton(
+                    onPressed: _showCategoryPicker,
+                    child: Text(
+                      _selectedCategory?.toString().split('.').last ?? 'Select category',
+                      style: const TextStyle(color: CupertinoColors.activeBlue),
+                    ),
                   ),
+                  const SizedBox(height: 20),
+                  const Text('Choices:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   ListView.builder(
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
@@ -199,14 +252,15 @@ class _EditScreenState extends State<EditScreen> {
                                   },
                                 ),
                               ),
-                              CupertinoButton(
-                                padding: EdgeInsets.zero,
-                                onPressed: () => _deleteChoice(index),
-                                child: Icon(
-                                  CupertinoIcons.delete,
-                                  color: CupertinoDynamicColor.resolve(CupertinoColors.destructiveRed, context)
+                              if (index >= 2) // Allow deletion only for choices beyond the first two
+                                CupertinoButton(
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () => _deleteChoice(index),
+                                  child: Icon(
+                                    CupertinoIcons.delete,
+                                    color: CupertinoDynamicColor.resolve(CupertinoColors.destructiveRed, context)
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -257,11 +311,9 @@ class _EditScreenState extends State<EditScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, // Align fields with labels
               children: <Widget>[
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Choose For:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                ),
+                const Text('Choose For:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 TextFormField(
                   controller: _chooseForController,
                   decoration: const InputDecoration(
@@ -280,10 +332,26 @@ class _EditScreenState extends State<EditScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Choices:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                const Text('Category:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                DropdownButtonFormField<Category>(
+                  value: _selectedCategory,
+                  items: Category.values.map((Category category) {
+                    return DropdownMenuItem<Category>(
+                      value: category,
+                      child: Text(category.toString().split('.').last),
+                    );
+                  }).toList(),
+                  onChanged: (Category? newValue) {
+                    setState(() {
+                      _selectedCategory = newValue;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    hintText: 'Select category',
+                  ),
                 ),
+                const SizedBox(height: 20),
+                const Text('Choices:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -311,13 +379,14 @@ class _EditScreenState extends State<EditScreen> {
                                 },
                               ),
                             ),
-                            IconButton(
-                              onPressed: () => _deleteChoice(index),
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
+                            if (index >= 2) // Allow deletion only for choices beyond the first two
+                              IconButton(
+                                onPressed: () => _deleteChoice(index),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: 20),

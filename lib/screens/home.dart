@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:io' show Platform;
 
+// ...existing code...
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -15,11 +16,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
   List<Map<String, dynamic>> _decisions = [];
+  List<Map<String, dynamic>> _filteredDecisions = [];
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadDecisions();
+    _searchController.addListener(_filterDecisions);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDecisions() async {
@@ -31,15 +41,27 @@ class _HomeScreenState extends State<HomeScreen> {
         final updatedItems = await _firebaseService.getDecisionsWithCounts();
         setState(() {
           _decisions = updatedItems;
+          _filteredDecisions = updatedItems;
         });
       } else {
         setState(() {
           _decisions = items;
+          _filteredDecisions = items;
         });
       }
     } catch (e) {
       print('Error loading decisions: $e');
     }
+  }
+
+  void _filterDecisions() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredDecisions = _decisions.where((decision) {
+        final chooseFor = decision['chooseFor'].toString().toLowerCase();
+        return chooseFor.contains(query);
+      }).toList();
+    });
   }
 
   Future<void> _editItem(int index) async {
@@ -111,10 +133,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCupertino(BuildContext context) {
+    final isDarkTheme = CupertinoTheme.of(context).brightness == Brightness.dark;
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: Image.asset('assets/icon/icon.png', width: 30),
         middle: const Text('DecideMate Pro'),
+        leading: GestureDetector(
+          child: Icon(
+            CupertinoIcons.back,
+            color: isDarkTheme ? CupertinoColors.white : CupertinoColors.black,
+          ),
+          onTap: () {
+            Navigator.pop(context);
+          },
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -183,87 +214,100 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       child: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.only(top: 20),
-          child: CupertinoScrollbar(
-            child: CustomScrollView(
-              slivers: <Widget>[
-                CupertinoSliverRefreshControl(
-                  onRefresh: _loadDecisions,
-                ),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final item = _decisions[index];
-                      return Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        margin: EdgeInsets.only(bottom: index == _decisions.length - 1 ? 20 : 10, left: 10, right: 10),
-                        decoration: BoxDecoration(
-                          color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: CupertinoListTile(
-                          title: GestureDetector(
-                            child: Text(item['chooseFor'], style: TextStyle(color: CupertinoDynamicColor.resolve(CupertinoColors.white, context))),
-                            onTap: () => Navigator.pushNamed(context, Routes.details, arguments: {'id': item['id'].toString(), 'chooseFor': item['chooseFor']}),
-                          ),
-                          trailing: GestureDetector(
-                            child: FaIcon(FontAwesomeIcons.ellipsisV, color: CupertinoDynamicColor.resolve(CupertinoColors.white, context)),
-                            onTap: () {
-                              showCupertinoModalPopup(
-                                context: context,
-                                builder: (BuildContext context) => CupertinoActionSheet(
-                                  actions: <CupertinoActionSheetAction>[
-                                    CupertinoActionSheetAction(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        _editItem(index);
-                                      },
-                                      child: Text(
-                                        'Edit',
-                                        style: TextStyle(
-                                          color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
-                                        ),
-                                      ),
-                                    ),
-                                    CupertinoActionSheetAction(
-                                      onPressed: () async {
-                                        Navigator.pop(context);
-                                        await _confirmDeleteItem(index);
-                                      },
-                                      isDestructiveAction: true,
-                                      child: Text(
-                                        'Delete',
-                                        style: TextStyle(
-                                          color: CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  cancelButton: CupertinoActionSheetAction(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: Text(
-                                      'Cancel',
-                                      style: TextStyle(
-                                        color: CupertinoDynamicColor.resolve(CupertinoColors.systemGrey, context),
-                                      ),
-                                    ),
-                                  ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: CupertinoSearchTextField(
+                controller: _searchController,
+                placeholder: 'Search...',
+              ),
+            ),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.only(top: 20),
+                child: CupertinoScrollbar(
+                  child: CustomScrollView(
+                    slivers: <Widget>[
+                      CupertinoSliverRefreshControl(
+                        onRefresh: _loadDecisions,
+                      ),
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = _filteredDecisions[index];
+                            return Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              margin: EdgeInsets.only(bottom: index == _filteredDecisions.length - 1 ? 20 : 10, left: 10, right: 10),
+                              decoration: BoxDecoration(
+                                color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: CupertinoListTile(
+                                title: GestureDetector(
+                                  child: Text(item['chooseFor'] ?? '', style: TextStyle(color: CupertinoDynamicColor.resolve(CupertinoColors.white, context))),
+                                  onTap: () => Navigator.pushNamed(context, Routes.details, arguments: {'id': item['id'].toString(), 'chooseFor': item['chooseFor']}),
                                 ),
-                              );
-                            },
-                          ),
+                                trailing: GestureDetector(
+                                  child: FaIcon(FontAwesomeIcons.ellipsisV, color: CupertinoDynamicColor.resolve(CupertinoColors.white, context)),
+                                  onTap: () {
+                                    showCupertinoModalPopup(
+                                      context: context,
+                                      builder: (BuildContext context) => CupertinoActionSheet(
+                                        actions: <CupertinoActionSheetAction>[
+                                          CupertinoActionSheetAction(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              _editItem(index);
+                                            },
+                                            child: Text(
+                                              'Edit',
+                                              style: TextStyle(
+                                                color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
+                                              ),
+                                            ),
+                                          ),
+                                          CupertinoActionSheetAction(
+                                            onPressed: () async {
+                                              Navigator.pop(context);
+                                              await _confirmDeleteItem(index);
+                                            },
+                                            isDestructiveAction: true,
+                                            child: Text(
+                                              'Delete',
+                                              style: TextStyle(
+                                                color: CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        cancelButton: CupertinoActionSheetAction(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text(
+                                            'Cancel',
+                                            style: TextStyle(
+                                              color: CupertinoDynamicColor.resolve(CupertinoColors.systemGrey, context),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: _filteredDecisions.length,
                         ),
-                      );
-                    },
-                    childCount: _decisions.length,
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -275,14 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/icon/icon.png', width: 30),
-            const SizedBox(width: 10),
-            const Text('DecideMate Pro'),
-          ],
-        ),
+        title: const Text('DecideMate Pro'),
         actions: [
           IconButton(
             icon: Icon(Icons.add_circle_outline, color: theme.colorScheme.primary),
@@ -323,6 +360,22 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48.0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search...',
+                border: InputBorder.none,
+                fillColor: theme.colorScheme.surface,
+                filled: true,
+                prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface),
+              ),
+            ),
+          ),
+        ),
       ),
       body: SafeArea(
         child: Container(
@@ -331,12 +384,12 @@ class _HomeScreenState extends State<HomeScreen> {
             child: RefreshIndicator(
               onRefresh: _loadDecisions,
               child: ListView.builder(
-                itemCount: _decisions.length,
+                itemCount: _filteredDecisions.length,
                 itemBuilder: (context, index) {
-                  final item = _decisions[index];
+                  final item = _filteredDecisions[index];
                   return Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    margin: EdgeInsets.only(bottom: index == _decisions.length - 1 ? 20 : 10, left: 10, right: 10),
+                    margin: EdgeInsets.only(bottom: index == _filteredDecisions.length - 1 ? 20 : 10, left: 10, right: 10),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
@@ -351,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: ListTile(
                       title: GestureDetector(
-                        child: Text(item['chooseFor'], style: TextStyle(color: theme.colorScheme.onSurface)),
+                        child: Text(item['chooseFor'] ?? '', style: TextStyle(color: theme.colorScheme.onSurface)),
                         onTap: () => Navigator.pushNamed(context, Routes.details, arguments: {'id': item['id'].toString(), 'chooseFor': item['chooseFor']}),
                       ),
                       trailing: GestureDetector(

@@ -26,6 +26,25 @@ class _DetailsScreenState extends State<DetailsScreen> {
   List choices = [];
   List results = [];
 
+  double _getFontSize(int length) {
+    switch (length) {
+      case int n when n <= 5:
+        return 18;
+      case int n when n <= 10:
+        return 16;
+      case int n when n <= 15:
+        return 14;
+      default:
+        return 12;
+    }
+  }
+
+  Color _getTextColor(Color backgroundColor) {
+    return ThemeData.estimateBrightnessForColor(backgroundColor) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -155,10 +174,14 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   Widget _buildContent(BuildContext context) {
+    final textColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+
     return Column(
       children: [
         Text('Choose For: $_chooseFor',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor)),
         const SizedBox(height: 20),
         Expanded(
           child: _choices.length > 1
@@ -173,16 +196,22 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     styleStrategy: UniformStyleStrategy(),
                     physics: CircularPanPhysics(
                       duration: Duration(seconds: 1),
-                      curve: Curves.decelerate,
+                      curve: Curves.elasticOut,
                     ),
                     selected: _controller.stream,
                     items: [
                       for (var choice in _choices)
                         FortuneItem(
-                          child: Text(choice,
-                              style: TextStyle(
-                                  color: CupertinoDynamicColor.resolve(CupertinoColors.label, context),
-                                  fontSize: choice.length > 10 ? 14 : 18)),
+                          child: Container(
+                            padding: EdgeInsets.only(left: 10,right: 5),
+                            child: Text(choice,
+                                overflow: TextOverflow.visible,
+                                style: TextStyle(
+                                    color: _getTextColor(Colors.primaries[
+                                        _choices.indexOf(choice) %
+                                            Colors.primaries.length]),
+                                    fontSize: _getFontSize(choice.length))),
+                          ),
                           style: FortuneItemStyle(
                             color: Colors.primaries[
                                 _choices.indexOf(choice) %
@@ -210,10 +239,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       FortuneIndicator(
                         alignment: Alignment.topCenter,
                         child: TriangleIndicator(
-                          color: const Color.fromARGB(255, 252, 211, 211),
+                          color: const Color.fromARGB(255, 0, 0, 0),
                           elevation: 10,
-                          width: 20,
-                          height: 15,
+                          width: 25,
+                          height: 20,
                         ),
                       ),
                     ],
@@ -221,26 +250,39 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 )
               : Center(
                   child: Text('Add more choices to spin the wheel',
-                      style: TextStyle(fontSize: 18, color: CupertinoDynamicColor.resolve(CupertinoColors.secondaryLabel, context))),
+                      style: TextStyle(fontSize: 18, color: textColor)),
                 ),
         ),
         const SizedBox(height: 20),
-        CupertinoButton(
-          color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
-          onPressed: _isSpinning
-              ? null
-              : () {
-                  setState(() {
-                    _isSpinning = true;
-                  });
-                  selectedChoice = Fortune.randomInt(0, _choices.length);
-                  _controller.add(selectedChoice);
-                },
-          child: Text('Spin', style: TextStyle(fontSize: 18)),
-        ),
+        Theme.of(context).platform == TargetPlatform.iOS
+            ? CupertinoButton(
+                color: CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context),
+                onPressed: _isSpinning
+                    ? null
+                    : () {
+                        setState(() {
+                          _isSpinning = true;
+                        });
+                        selectedChoice = Fortune.randomInt(0, _choices.length);
+                        _controller.add(selectedChoice);
+                      },
+                child: Text('Spin', style: TextStyle(fontSize: 18, color: _getTextColor(CupertinoDynamicColor.resolve(CupertinoColors.systemBlue, context)))),
+              )
+            : ElevatedButton(
+                onPressed: _isSpinning
+                    ? null
+                    : () {
+                        setState(() {
+                          _isSpinning = true;
+                        });
+                        selectedChoice = Fortune.randomInt(0, _choices.length);
+                        _controller.add(selectedChoice);
+                      },
+                child: Text('Spin', style: TextStyle(fontSize: 18, color: _getTextColor(Theme.of(context).primaryColor))),
+              ),
         const SizedBox(height: 20),
         Text('Results:',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor)),
         const SizedBox(height: 10),
         Expanded(
           child: ListView.builder(
@@ -251,21 +293,37 @@ class _DetailsScreenState extends State<DetailsScreen> {
               return Padding(
                 padding: const EdgeInsets.symmetric(
                     vertical: 8.0, horizontal: 16.0),
-                child: ListTile(
-                  title: Text('$choice', style: TextStyle(fontSize: 18)),
-                  trailing: Text('$count',
-                      style: TextStyle(fontSize: 18, color: CupertinoDynamicColor.resolve(CupertinoColors.label, context))),
-                ),
+                child: Theme.of(context).platform == TargetPlatform.iOS
+                    ? CupertinoListTile(
+                        title: Text('$choice', style: TextStyle(fontSize: 18, color: textColor)),
+                        trailing: Text('$count',
+                            style: TextStyle(fontSize: 18, color: textColor)),
+                      )
+                    : Material(
+                        child: ListTile(
+                          title: Text('$choice', style: TextStyle(fontSize: 18, color: textColor)),
+                          trailing: Text('$count',
+                              style: TextStyle(fontSize: 18, color: textColor)),
+                        ),
+                      ),
               );
             },
           ),
         ),
         const SizedBox(height: 20),
-        CupertinoButton(
-          color: CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context),
-          onPressed: _confirmClearResults,
-          child: Text('Clear Results', style: TextStyle(fontSize: 18)),
-        ),
+        Theme.of(context).platform == TargetPlatform.iOS
+            ? CupertinoButton(
+                color: CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context),
+                onPressed: _confirmClearResults,
+                child: Text('Clear Results', style: TextStyle(fontSize: 18, color: _getTextColor(CupertinoDynamicColor.resolve(CupertinoColors.systemRed, context)))),
+              )
+            : ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                onPressed: _confirmClearResults,
+                child: Text('Clear Results', style: TextStyle(fontSize: 18, color: _getTextColor(Colors.red))),
+              ),
         const SizedBox(height: 20),
       ],
     );
