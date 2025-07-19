@@ -3,7 +3,6 @@ import 'package:decidemate_pro/services/firebase_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'dart:io' show Platform;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -118,7 +117,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Platform.isIOS ? _buildCupertino(context) : _buildMaterial(context);
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+    return isIOS ? _buildCupertino(context) : _buildMaterial(context);
   }
 
   Widget _buildCupertino(BuildContext context) {

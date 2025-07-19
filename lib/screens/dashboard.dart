@@ -35,7 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onPressed: () async {
             await FirebaseAuth.instance.signOut();
             if (mounted) {
-              Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+              Navigator.of(context).pushNamedAndRemoveUntil(Routes.auth, (route) => false);
             }
           },
           child: const Icon(CupertinoIcons.square_arrow_right, size: 28, color: CupertinoColors.activeBlue),
@@ -58,14 +58,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         automaticallyImplyLeading: false, // Remove back button
         actions: [
-          // IconButton(
-          //   icon: const Icon(
-          //     Icons.logout,
-          //     color: CupertinoColors.black, // Cupertino style color
-          //   ),
-          //   onPressed: widget.onSignOut,
-          //   tooltip: 'Sign Out',
-          // ),
+          IconButton(
+            icon: const Icon(
+              Icons.logout,
+              color: Colors.black, // Material style color
+            ),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+              }
+            },
+            tooltip: 'Sign Out',
+          ),
         ],
       ),
       body: _buildBody(today),
