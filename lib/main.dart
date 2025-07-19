@@ -5,13 +5,20 @@ import 'package:decidemate_pro/screens/edit.dart';
 import 'package:decidemate_pro/screens/history.dart';
 import 'package:decidemate_pro/screens/home.dart';
 import 'package:decidemate_pro/screens/insights.dart';
+import 'package:decidemate_pro/screens/get_started.dart';
+import 'package:decidemate_pro/screens/auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 import 'services/firebase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  final user = FirebaseAuth.instance.currentUser;
   runApp(
     MultiProvider(
       providers: [
@@ -19,12 +26,14 @@ void main() async {
           create: (_) => FirebaseService(),
         ),
       ],
-      child: const MyApp(),
+      child: MyApp(initialRoute: user != null ? Routes.dashboard : Routes.getStarted),
     ),
   );
 }
 
 class Routes {
+  static const String getStarted = '/get_started';
+  static const String auth = '/auth';
   static const String home = '/';
   static const String details = '/details';
   static const String edit = '/edit';
@@ -35,7 +44,8 @@ class Routes {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+  const MyApp({super.key, this.initialRoute = Routes.getStarted});
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -81,7 +91,11 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _initializeApp() async {
     try {
-      // Initialize Firebase or other services here
+      // Initialize Firebase
+
+await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+);
     } catch (e) {
       setState(() {
         _hasError = true;
@@ -119,14 +133,19 @@ class _MyAppState extends State<MyApp> {
                 barBackgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
                 scaffoldBackgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
               ),
-              initialRoute: Routes.dashboard,
+              initialRoute: widget.initialRoute,
               routes: {
+                Routes.getStarted: (context) => const GetStartedScreen(),
+                Routes.auth: (context) => const AuthScreen(),
                 Routes.home: (context) => const HomeScreen(),
                 Routes.details: (context) => const DetailsScreen(),
                 Routes.edit: (context) => const EditScreen(),
                 Routes.add: (context) => const AddScreen(),
-                Routes.dashboard: (context) => const DashboardScreen(),
-                Routes.insights: (context) => const InsightsScreen(),
+                Routes.dashboard: (context) => DashboardScreen(onSignOut: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.of(context).pushNamedAndRemoveUntil(Routes.auth, (route) => false);
+                }),
+                Routes.insights: (context) =>  InsightsScreen(),
                 Routes.history: (context) => const HistoryScreen(),
               },
             );
@@ -146,14 +165,19 @@ class _MyAppState extends State<MyApp> {
                 scaffoldBackgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
                 textTheme: isDarkMode ? Typography.whiteMountainView : Typography.blackMountainView,
               ),
-              initialRoute: Routes.dashboard,
+              initialRoute: widget.initialRoute,
               routes: {
+                Routes.getStarted: (context) => const GetStartedScreen(),
+                Routes.auth: (context) => const AuthScreen(),
                 Routes.home: (context) => const HomeScreen(),
                 Routes.details: (context) => const DetailsScreen(),
                 Routes.edit: (context) => const EditScreen(),
                 Routes.add: (context) => const AddScreen(),
-                Routes.dashboard: (context) => const DashboardScreen(),
-                Routes.insights: (context) => const InsightsScreen(),
+                Routes.dashboard: (context) => DashboardScreen(onSignOut: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.of(context).pushNamedAndRemoveUntil(Routes.auth, (route) => false);
+                }),
+                Routes.insights: (context) =>  InsightsScreen(),
                 Routes.history: (context) => const HistoryScreen(),
               },
             );

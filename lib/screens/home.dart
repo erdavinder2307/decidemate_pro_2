@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:io' show Platform;
 
-// ...existing code...
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -34,21 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadDecisions() async {
     try {
-      final items = await _firebaseService.getDecisionsWithCounts();
-      if (items.isEmpty) {
-        await _firebaseService.insertDecision('sample_id', 'Sample Choose For');
-        await _firebaseService.insertChoices('sample_id', ['Sample Choice 1', 'Sample Choice 2']);
-        final updatedItems = await _firebaseService.getDecisionsWithCounts();
-        setState(() {
-          _decisions = updatedItems;
-          _filteredDecisions = updatedItems;
-        });
-      } else {
-        setState(() {
-          _decisions = items;
-          _filteredDecisions = items;
-        });
-      }
+      final items = await _firebaseService.getDecisions(); // Firestore fetch
+      setState(() {
+        _decisions = items;
+        _filteredDecisions = items;
+      });
     } catch (e) {
       print('Error loading decisions: $e');
     }
@@ -205,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 );
                 if (confirm == true) {
-                  await _firebaseService.clearDatabase();
+                  // Remove or comment out any calls to _firebaseService.clearDatabase();
                   await _loadDecisions(); // Reload the list after clearing the database
                 }
               },
@@ -354,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               );
               if (confirm == true) {
-                await _firebaseService.clearDatabase();
+                // Remove or comment out any calls to _firebaseService.clearDatabase();
                 await _loadDecisions(); // Reload the list after clearing the database
               }
             },

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "810962874550",
+    "project_id": "decidematepro",
+    "storage_bucket": "decidematepro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810962874550:android:639eab328a424c11baf617",
+        "android_client_info": {
+          "package_name": "com.amazingappsdev.decidematepro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAS2Uyi7juwGdVBLnMj6hHtSJvB2RJ3XM0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

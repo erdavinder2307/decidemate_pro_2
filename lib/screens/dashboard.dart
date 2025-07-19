@@ -1,25 +1,18 @@
 import 'package:decidemate_pro/main.dart';
-import 'package:decidemate_pro/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final Future<void> Function()? onSignOut;
+  const DashboardScreen({super.key, this.onSignOut});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 0;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
@@ -37,6 +30,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Image.asset('assets/icon/icon.png', width: 30),
           ]),
         middle: const Text('DecideMate Pro'),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () async {
+            await FirebaseAuth.instance.signOut();
+            if (mounted) {
+              Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+            }
+          },
+          child: const Icon(CupertinoIcons.square_arrow_right, size: 28, color: CupertinoColors.activeBlue),
+        ),
       ),
       child: _buildBody(today),
     );
@@ -54,6 +57,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         automaticallyImplyLeading: false, // Remove back button
+        actions: [
+          // IconButton(
+          //   icon: const Icon(
+          //     Icons.logout,
+          //     color: CupertinoColors.black, // Cupertino style color
+          //   ),
+          //   onPressed: widget.onSignOut,
+          //   tooltip: 'Sign Out',
+          // ),
+        ],
       ),
       body: _buildBody(today),
     
@@ -120,14 +133,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Navigator.pushNamed(context, Routes.home);
             break;
     case 'Quick Spin':
-            final randomResult = await FirebaseService().getRandomResultFromLastThree();
+            // TODO: Implement Firestore logic for Quick Spin
+            /* final randomResult = await FirebaseService().getRandomResultFromLastThree();
             if (randomResult != null) {
                 Navigator.pushNamed(context, Routes.details, arguments: {'id': randomResult['id'].toString(), 'chooseFor': randomResult['chooseFor']});
             } else {
               
                 SnackBar(content: Text('No recent spins available'));
               
-            }
+            } */
             break;
           case 'Insights':
             Navigator.pushNamed(context, Routes.insights);
