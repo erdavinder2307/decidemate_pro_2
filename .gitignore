@@ -5,9 +5,11 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -41,3 +43,66 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+pubspec.lock
+pubspec.lock
+ios/Podfile.lock
+
+# Firebase configuration files with hardcoded secrets (platform-specific)
+ios/Runner/GoogleService-Info.plist
+android/app/google-services.json
+macos/Runner/GoogleService-Info.plist
+
+# Environment variables containing sensitive data
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# Keep safe template files for team setup
+!.env.example
+!lib/firebase_options_template.dart
+!ios/Runner/GoogleService-Info-template.plist
+
+# Generated configuration files (optional - uncomment if using config generator)
+# ios/Runner/GoogleService-Info.plist.generated
+# android/app/google-services.json.generated
+
+# Additional security files
+*.pem
+*.p12
+*.mobileprovision
+*.keystore
+key.properties
+google-services.json
+GoogleService-Info.plist
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# IDE and editor files
+.vscode/settings.json
+.vscode/launch.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/jarRepositories.xml
+
+# macOS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Firebase specific
+.firebase/
+firebase_options_production.dart
+firebase_options_staging.dart
